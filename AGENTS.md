@@ -89,6 +89,10 @@ Follow these style guidelines in chat, commit messages, and prose:
 - Reserve prose docs for explaining _why_ a system exists and _when_ to use it, not _what_ it accepts. Types handle the _what_.
 - If an API is too complex to type, that's a design problem worth fixing.
 
+## Authoring skills
+
+- Whenever I ask you to author or edit an agent skill, conform to the agentskills.io specification: https://agentskills.io/specification
+
 ## Fetching data
 
 If you make web requests to public pages and get blocked by sites like OpenAI's docs pages returning 403 status codes, use other methods to fetch the data.
