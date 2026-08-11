@@ -6,6 +6,7 @@
 - Your training data is stale. Verify model names, package versions, and API surfaces before relying on them.
 - Don't say a task is done until typechecks, linters, and tests pass. If none are configured, say so explicitly instead of claiming success.
 - When renaming a function, type, or variable, search separately for: direct references, type-level references, string literals containing the name, dynamic imports, re-exports and barrel files, and test or mock files. One grep is not enough.
+- Use precise domain-specific vocabulary for the task at hand (e.g. "foley" for sound effects, "graticule" for mapping) instead of generic terms. Don't define or explain the term unless asked.
 
 ## Before coding
 
