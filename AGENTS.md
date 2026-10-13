@@ -24,8 +24,10 @@
 
 - Use GitHub's "Scripts to Rule Them All" approach to running scripts and commands: https://github.com/github/scripts-to-rule-them-all
 - If the project has a "scripts" or "script" directory, run those scripts for tasks like testing, linting, formatting, etc.
+- Only add scripts that will keep being useful to `scripts/`. Do one-off verification with throwaway code outside the repo, not as committed scripts or npm commands.
 - If the project has a `script/lint` or `scripts/lint` script, run it before committing changes with Git.
 - If linting fails, fix the linting errors and run the linter until all the errors are resolved.
+- launchd agents don't inherit shell env vars (e.g. from your shell profile); set any that scheduled jobs depend on in the plist's `EnvironmentVariables`.
 
 ## Working with Git
 
@@ -36,15 +38,26 @@
 ## Working with Node.js and npm
 
 - Always use `npx` when running global npm CLIs, e.g. `npx wrangler` instead of `wrangler`
+- When validating JSONC, don't strip comments with regex; URLs contain `//`. Use a JSONC-aware parser (e.g. `jsonc-parser` or `strip-json-comments`).
 
 ## Working with Cloudflare
 
 - Always using JSONC for Workers configs (not TOML)
 - Use .env files for secrets and environment variables. Don't use .dev.vars as those are Cloudflare-specific. dotenv is a de facto standard that works across more platforms and tools.
-- Always use the latest verions of Wrangler and Cloudflare's npm packages.
+- Always use the latest versions of cf and Cloudflare's npm packages.
 - Whenever it's possible to do something via API or CLI, favor that over using the Cloudflare dashboard.
+- If a remote `cf` or `wrangler` command fails with `code: 7403` ("account is not valid or is not authorized") or `code: 10000` ("Authentication error") while `cf auth whoami` / `wrangler whoami` shows the right account, a stray `CLOUDFLARE_API_KEY`/`CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` env var is overriding the OAuth session; the account ID in the failing API URL will not match `whoami`. Re-run with `env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_ACCOUNT_ID -u CLOUDFLARE_SUPERTOKEN -u CLOUDFLARE_API_TOKEN cf ...` (or `npx wrangler ...`).
 - Favor Cloudflare Workers over Cloudflare Pages for static sites
 - Use Hono for worker apps when appropriate
+- When connecting to GitHub's MCP server from a Worker, use `https://api.githubcopilot.com/mcp/` with a PAT via `Authorization: Bearer` header. The `mcp.github.com` hostname triggers Cloudflare error 1016 from Worker context. OAuth is unavailable from non-browser Workers.
+
+## Cloudflare CLI - cf - v20260928
+
+`cf` is Cloudflare's current CLI and covers the whole Cloudflare platform. Prefer it over Wrangler: create projects with `cf init`, develop with `cf dev`, deploy with `cf deploy`, and manage account resources with `cf <product> …` (for example `cf d1 list`).
+
+Wrangler is only for projects that already use it – a `wrangler.jsonc`, `wrangler.json` or `wrangler.toml` file – or when the user asks for it. Keep using Wrangler in those projects unless asked to migrate, and use `cf migrate` in this case.
+
+`cf` commands differ from Wrangler's; check `cf --help` or `cf cli search <what you want to do>` instead of guessing. If a `cf` command fails in a project that doesn't use Wrangler, don't fall back to Wrangler (including `npx wrangler`) without offering to report it.
 
 ## Working with GitHub and GitLab
 
@@ -93,6 +106,7 @@ Follow these style guidelines in chat, commit messages, and prose:
 ## Authoring skills
 
 - Whenever I ask you to author or edit an agent skill, conform to the agentskills.io specification: https://agentskills.io/specification
+- For project-local skills, use `.agents/skills/<name>/` (agent-agnostic), not `.pi/skills/` (pi-specific).
 
 ## Fetching data
 
@@ -108,6 +122,8 @@ Use the following tools for browser automation tasks:
 - IMPORTANT: Never use the Chrome DevTools MCP unless explicitly asked to do so.
 - When using the Chrome DevTools MCP, check for an existing tab already on the relevant page before opening a new one. If no such tab exists, open a new tab. Don't navigate away from or overtake unrelated existing tabs.
 - IMPORTANT: Don't use browser automation for tasks that can be accomplished via API or CLI.
+- Chrome allows only one client on its browser-level debugging WebSocket. If a CDP connection returns 403, stop the other client first. Also: `/json` HTTP discovery is disabled on the default profile (read `DevToolsActivePort` instead), and Node's built-in `WebSocket` sends an `Origin` header that Chrome rejects.
+- If a CDP connection is waiting on me to approve Chrome's remote debugging prompt and I haven't responded within about 30 seconds, alert me audibly with `afplay /System/Library/Sounds/Glass.aiff; say "Hey, I need DevTools access over here"`, then keep waiting or retry. Repeat the alert at most every couple of minutes.
 
 ## Secrets and credentials
 
@@ -118,7 +134,7 @@ Use the following tools for browser automation tasks:
 
 ## Important rules
 
-- IMPORTANT: NEVER PUSH TO THE MAIN OR DEFAULT BRANCH. ALWAYS PUSH TO A FEATURE BRANCH.
+- IMPORTANT: Never push to the main or default branch unless I specifically ask you to. If I ask you to, then it's okay.
 - IMPORTANT: If your last message included HTTP or HTTPS URLs, offer to open those for me in my default browser.
 - Don't push commits to branches with PRs that have already been merged.
 
@@ -140,4 +156,4 @@ Use the following tools for browser automation tasks:
 - When an AGENTS.md grows past about 200 lines, propose deletions or consolidations alongside additions, not just additions.
 - If I ask you to "audit AGENTS.md", read the whole file and propose a list of rules to delete because they're obsolete, duplicated, or never followed in practice, with one-sentence reasoning each.
 - Every project MUST have a project-level `AGENTS.md` with a self-update instruction. When scaffolding a new project, create one without asking. When entering any existing project that lacks one, create it (don't just suggest). When an existing project already has an `AGENTS.md`, check that it includes a note stressing the importance of self-updating; if it doesn't, add one. AGENTS.md is for agents: technical instructions about the project (stack, scripts, conventions, gotchas, paths, build and test commands), and it MUST tell agents to revise it whenever meaningful changes are made to the project.
-- Also check whether the project has a `README.md`. If it doesn't, suggest creating one. README.md is for humans: what the project is, why it exists, and how a person gets started. Don't conflate the two. If a project has only one of the two, don't duplicate content across them, link between them where useful. Link to AGENTS.md from the README.md when relevant.
+- Also check whether the project has a `README.md`. If it doesn't, suggest creating one. README.md is for humans: high-level prose about what the project is and why it exists. Keep development environment setup, script lists, and file trees out of the README; that technical detail belongs in AGENTS.md. Don't conflate the two. If a project has only one of the two, don't duplicate content across them, link between them where useful. Link to AGENTS.md from the README.md when relevant.
