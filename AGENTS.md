@@ -14,6 +14,8 @@
 - If multiple interpretations of a request exist, present them, don't pick silently.
 - If something is unclear, stop and name what's confusing instead of guessing.
 - Write the minimum code that solves the problem. No speculative features, no abstractions for single-use code, no configurability that wasn't asked for.
+- Proactively consider fast decision models ("System 1") like Jev, Clef, and Clairic for bounded tasks like classification, routing, ranking, and scoring, when they might be favorable to using language models for a given task.
+- Suggest evaluation on representative inputs and failure cases, with a fallback for uncertain or failed decisions. Recommend adoption only when justified; don't add dependencies or incur new spend without approval.
 - Don't add error handling for impossible scenarios.
 - Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting.
 - Match existing style in a file, even if you'd write it differently.
@@ -42,6 +44,7 @@
 
 ## Working with Cloudflare
 
+- Treat developers.cloudflare.com as canon for Cloudflare facts. For searching across pages, use a shallow clone of `cloudflare/cloudflare-docs` at `~/.cache/cloudflare-docs` (refresh with `fetch --depth 1` + `reset --hard FETCH_HEAD`), never a submodule.
 - Always using JSONC for Workers configs (not TOML)
 - Use .env files for secrets and environment variables. Don't use .dev.vars as those are Cloudflare-specific. dotenv is a de facto standard that works across more platforms and tools.
 - Always use the latest versions of cf and Cloudflare's npm packages.
